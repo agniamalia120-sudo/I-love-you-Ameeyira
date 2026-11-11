@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feed Our Cat</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
+<style>
+
+:root{box-sizing:border-box;--bg:#ffe3ec;--ink:#5a2d3a;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1d1418}}
+:root[data-theme="dark"]{--bg:#1d1418}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);display:flex;justify-content:center;overflow:hidden;font-family:"Baloo 2","Trebuchet MS",system-ui,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none}
+#stage{position:relative;width:100%;max-width:430px;height:100%;overflow:hidden;background:linear-gradient(#ffd3e1,#ffeef4 72%);color:var(--ink)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:88px;background:#ffc2d4;border-top:4px solid #ffb0c6;z-index:0}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px 20px 40px;text-align:center;z-index:2}
+.screen.active{display:flex;animation:fade .4s ease}
+#s-game.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+h2{margin:0;font-size:38px;line-height:1.05;max-width:340px}
+p{margin:0;font-size:19px;line-height:1.4;max-width:330px;font-weight:600}
+.small{font-size:15px;opacity:.7}
+.kabari{font-weight:800;font-size:22px}
+.row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.ic{width:34px;height:34px;vertical-align:-8px}
+
+/* title logo, matched to the reference */
+.logo{position:relative;width:340px;height:330px;margin:6px auto 0;flex:none}
+.l1,.l2{position:absolute;left:50%;transform:translateX(-50%);font-size:112px;font-weight:800;line-height:1;color:#fff;-webkit-text-stroke:6px var(--ink);paint-order:stroke fill;white-space:nowrap;letter-spacing:-2px;text-shadow:0 8px 0 var(--ink)}
+.l1{top:0}
+.l2{top:104px;left:46%}
+.our{position:absolute;left:52%;top:78px;transform:translateX(-50%) rotate(-12deg);font-size:60px;font-weight:800;line-height:1;color:#ffd24d;-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;z-index:2}
+.rope{position:absolute;left:0;top:0;width:340px;height:330px;overflow:visible;pointer-events:none;z-index:3}
+.donut{position:absolute;left:120px;top:194px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,transparent 0 17px,#ff9fbd 18px 42px,#ffd27a 43px 50px,transparent 51px);animation:dn 2.4s ease-in-out infinite}
+.donut::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(3px 6px at 30% 22%,#7fd1ff 98%,transparent),radial-gradient(3px 6px at 72% 26%,#b8f28c 98%,transparent),radial-gradient(3px 6px at 22% 58%,#fff 98%,transparent),radial-gradient(3px 6px at 78% 62%,#c9a3ff 98%,transparent),radial-gradient(3px 6px at 50% 80%,#fff 98%,transparent)}
+@keyframes dn{50%{transform:translateY(28px)}}
+
+/* cat */
+.catsvg{width:160px;height:176px;flex:none}
+.cat-svg{display:block;width:100%;height:100%;overflow:visible;animation:bob 2.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.tail{transform-origin:150px 200px;animation:wag 1.8s ease-in-out infinite}
+@keyframes wag{50%{transform:rotate(-10deg)}}
+.lid{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);animation:blink 3.6s infinite}
+@keyframes blink{0%,88%,100%{transform:scaleY(0)}92%{transform:scaleY(1)}96%{transform:scaleY(0)}}
+.mouth{transform-origin:100px 116px;animation:grin 2.4s ease-in-out infinite}
+@keyframes grin{50%{transform:scale(1.15,1.35)}}
+.m-open{display:none}
+#gcat{position:absolute;left:0;bottom:64px;z-index:3;will-change:transform}
+#gcat.chomp .m-smile{display:none}
+#gcat.chomp .m-open{display:inline}
+#gcat.chomp .cat-svg{animation:hop .38s ease-out}
+@keyframes hop{40%{transform:translateY(-16px) scale(1.05,.95)}}
+
+/* buttons */
+.btn{display:inline-block;min-width:150px;padding:14px 22px;border:3px solid var(--ink);border-radius:999px;background:#fff3cc;color:var(--ink);font-family:inherit;font-weight:800;font-size:24px;line-height:1;cursor:pointer;text-decoration:none;box-shadow:0 6px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.btn.nai{background:#d9ecff}
+.btn.ghost{background:#fff;font-size:18px;min-width:0;padding:10px 20px;box-shadow:0 4px 0 var(--ink)}
+.btn:focus-visible{outline:3px dashed var(--ink);outline-offset:4px}
+#sound{position:absolute;top:12px;right:12px;width:52px;height:52px;border-radius:50%;border:3px solid var(--ink);background:#fff3cc;z-index:20;cursor:pointer;box-shadow:0 4px 0 var(--ink);display:grid;place-items:center}
+#sound svg{width:30px;height:30px}
+
+/* game */
+#hud{position:absolute;top:58px;left:0;right:0;text-align:center;z-index:5;font-weight:800;font-size:20px;pointer-events:none}
+#hud small{display:block;font-weight:600;font-size:14px;opacity:.8}
+#banner{position:absolute;left:0;right:0;top:34%;text-align:center;z-index:6;opacity:0;transform:scale(.9);transition:.35s;pointer-events:none}
+#banner.show{opacity:1;transform:none}
+#banner b{display:block;font-size:44px;line-height:1.1;color:#fff;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill}
+#banner span{display:block;font-size:24px;font-weight:800}
+.it{position:absolute;left:0;top:0;width:44px;height:44px;z-index:2;filter:drop-shadow(0 3px 0 rgba(90,45,58,.25))}
+.it svg,.fx svg{display:block;width:100%;height:100%;overflow:visible}
+.fx{position:absolute;z-index:8;font-size:34px;font-weight:800;pointer-events:none;transform:translate(-50%,-50%);animation:fx .8s ease-out forwards}
+.fx.blast{width:120px;height:120px;animation:blast .8s ease-out forwards}
+@keyframes fx{from{opacity:1;transform:translate(-50%,-50%) scale(.6)}to{opacity:0;transform:translate(-50%,-150%) scale(1.3)}}
+@keyframes blast{0%{transform:translate(-50%,-50%) scale(.2)}40%{transform:translate(-50%,-50%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.4)}}
+#s-game.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translate(-8px,4px)}40%{transform:translate(8px,-4px)}60%{transform:translate(-6px,2px)}80%{transform:translate(4px,-2px)}}
+
+/* hearts on yes */
+.heart{position:absolute;bottom:-30px;width:28px;height:28px;pointer-events:none;animation:rise linear forwards;z-index:0}
+.heart svg{display:block;width:100%;height:100%}
+@keyframes rise{to{transform:translateY(-110vh)}}
+</style>
+</head>
+<body>
+
+<!-- hand-drawn icons used in place of system emoji -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="f-donut"><circle cx="24" cy="24" r="20" fill="#ffd27a" stroke="#5a2d3a" stroke-width="2.5"/><circle cx="24" cy="24" r="14" fill="#ff9fbd" stroke="#5a2d3a" stroke-width="2"/><circle cx="24" cy="24" r="5.5" fill="#ffe3ec" stroke="#5a2d3a" stroke-width="2"/><path d="M12 14l3 2M34 13l-3 2M11 31l3-1M37 31l-3-1" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></g>
+<g id="f-pizza"><path d="M24 5L43 40Q24 47 5 40Z" fill="#ffd27a" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M5 40Q24 47 43 40" fill="none" stroke="#e8a25c" stroke-width="5" stroke-linecap="round"/><circle cx="22" cy="22" r="4" fill="#ff6f6f" stroke="#5a2d3a" stroke-width="1.5"/><circle cx="31" cy="34" r="3.5" fill="#ff6f6f" stroke="#5a2d3a" stroke-width="1.5"/></g>
+<g id="f-sushi"><circle cx="24" cy="24" r="20" fill="#3b4a3a" stroke="#5a2d3a" stroke-width="2.5"/><circle cx="24" cy="24" r="13" fill="#fff" stroke="#5a2d3a" stroke-width="2"/><circle cx="24" cy="24" r="6" fill="#ff8a65" stroke="#5a2d3a" stroke-width="1.5"/></g>
+<g id="f-cake"><path d="M10 42L38 42L32 18L16 18Z" fill="#f7c59f" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M8 18Q12 10 16 18Q20 12 24 18Q28 12 32 18Q36 10 40 18Z" fill="#fff" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 31H34" stroke="#ff8fab" stroke-width="3"/><circle cx="24" cy="12" r="4" fill="#ff5c7a" stroke="#5a2d3a" stroke-width="2"/></g>
+<g id="f-straw"><path d="M24 44C10 34 6 22 10 16Q24 8 38 16C42 22 38 34 24 44Z" fill="#ff5c7a" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 14L18 9L24 14L30 9L34 14L24 18Z" fill="#7bd389" stroke="#5a2d3a" stroke-width="2" stroke-linejoin="round"/><circle cx="18" cy="24" r="1.6" fill="#ffe9a8"/><circle cx="30" cy="24" r="1.6" fill="#ffe9a8"/><circle cx="24" cy="32" r="1.6" fill="#ffe9a8"/><circle cx="16" cy="34" r="1.6" fill="#ffe9a8"/><circle cx="32" cy="34" r="1.6" fill="#ffe9a8"/></g>
+<g id="f-drum"><line x1="24" y1="24" x2="39" y2="9" stroke="#5a2d3a" stroke-width="9" stroke-linecap="round"/><line x1="24" y1="24" x2="39" y2="9" stroke="#fff8ee" stroke-width="4.5" stroke-linecap="round"/><circle cx="18" cy="30" r="12" fill="#e8a25c" stroke="#5a2d3a" stroke-width="2.5"/><path d="M12 26Q14 22 18 22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/></g>
+<g id="f-cookie"><circle cx="24" cy="24" r="20" fill="#d9a46a" stroke="#5a2d3a" stroke-width="2.5"/><circle cx="16" cy="18" r="3" fill="#5a2d3a"/><circle cx="30" cy="15" r="2.5" fill="#5a2d3a"/><circle cx="33" cy="28" r="3" fill="#5a2d3a"/><circle cx="18" cy="31" r="2.5" fill="#5a2d3a"/><circle cx="25" cy="24" r="2" fill="#5a2d3a"/></g>
+<g id="f-ice"><path d="M13 24L35 24L24 46Z" fill="#f4c28a" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M11 26Q10 8 24 6Q38 8 37 26Q30 22 24 26Q18 22 11 26Z" fill="#ffb3c6" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/></g>
+<g id="f-crois"><path d="M4 30Q8 16 24 14Q40 16 44 30Q38 24 32 26Q24 20 16 26Q10 24 4 30Z" fill="#f2b35a" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M24 15V22M15 19L18 24M33 19L30 24" stroke="#5a2d3a" stroke-width="1.8" stroke-linecap="round"/></g>
+<g id="f-melon"><path d="M4 16A20 20 0 0 0 44 16Z" fill="#ff6f8e" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M4 16A20 20 0 0 0 44 16" fill="none" stroke="#7bd389" stroke-width="5"/><ellipse cx="16" cy="24" rx="1.5" ry="2.5" fill="#5a2d3a"/><ellipse cx="24" cy="30" rx="1.5" ry="2.5" fill="#5a2d3a"/><ellipse cx="32" cy="24" rx="1.5" ry="2.5" fill="#5a2d3a"/></g>
+<g id="i-bomb"><path d="M24 14Q30 4 41 7" fill="none" stroke="#5a2d3a" stroke-width="3" stroke-linecap="round"/><circle cx="41" cy="7" r="3.5" fill="#ffd24d" stroke="#5a2d3a" stroke-width="2"/><circle cx="22" cy="28" r="16" fill="#4a3b44" stroke="#5a2d3a" stroke-width="2.5"/><path d="M12 24Q13 17 20 15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".6"/></g>
+<g id="i-boom"><polygon points="50,2 58,28 86,14 72,40 98,50 72,60 86,86 58,72 50,98 42,72 14,86 28,60 2,50 28,40 14,14 42,28" fill="#ffd24d" stroke="#5a2d3a" stroke-width="4" stroke-linejoin="round"/><polygon points="50,24 56,42 72,36 62,50 72,64 56,58 50,76 44,58 28,64 38,50 28,36 44,42" fill="#ff8a3d" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/></g>
+<g id="i-heart"><path d="M24 42C6 30 3 18 11 12C17 8 22 11 24 16C26 11 31 8 37 12C45 18 42 30 24 42Z" fill="#ff6f91" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/></g>
+<g id="i-broken"><path d="M24 42C6 30 3 18 11 12C17 8 22 11 24 16C26 11 31 8 37 12C45 18 42 30 24 42Z" fill="#9b7fb0" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M25 16L20 25L27 28L22 38" fill="none" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/></g>
+<g id="i-spk"><path d="M8 18H16L28 8V40L16 30H8Z" fill="#fff" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M33 17Q37 24 33 31M38 11Q46 24 38 37" fill="none" stroke="#5a2d3a" stroke-width="2.5" stroke-linecap="round"/></g>
+<g id="i-mute"><path d="M8 18H16L28 8V40L16 30H8Z" fill="#fff" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/><path d="M34 18L44 32M44 18L34 32" stroke="#5a2d3a" stroke-width="2.5" stroke-linecap="round"/></g>
+<g id="i-env"><rect x="6" y="12" width="36" height="24" rx="3" fill="#fff" stroke="#5a2d3a" stroke-width="2.5"/><path d="M7 14L24 28L41 14" fill="none" stroke="#5a2d3a" stroke-width="2.5" stroke-linejoin="round"/></g>
+</defs></svg>
+
+<div id="stage">
+  <div class="floor"></div>
+  <button id="sound" aria-label="Sound on or off"><svg viewBox="0 0 48 48"><use href="#i-spk"/></svg></button>
+
+  <section id="s-title" class="screen active">
+    <div class="logo">
+      <div class="l1">FEED</div><div class="our">our</div><div class="l2">CAT</div>
+      <svg class="rope" aria-hidden="true"><path fill="none" stroke="#9b7fb0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M134 -80V18A42 40 0 0 0 134 98Q158 116 170 150L170 194"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.5;1" keySplines=".42 0 .58 1;.42 0 .58 1" values="M134 -80V18A42 40 0 0 0 134 98Q158 116 170 150L170 194;M134 -80V18A42 40 0 0 0 134 98Q158 116 170 150L170 222;M134 -80V18A42 40 0 0 0 134 98Q158 116 170 150L170 194"/></path></svg>
+      <div class="donut"></div>
+    </div>
+    <div class="catsvg"></div>
+    <button id="playBtn" class="btn">PLAY</button>
+    <p class="small">Tap the screen for music</p>
+  </section>
+
+  <section id="s-game" class="screen">
+    <div id="hud"><div id="hudS">ROUND 1 / 3</div><div id="hudScore">Food: 0</div><small>Drag to move · catch food · dodge bombs</small></div>
+    <div id="banner"></div>
+    <div id="gcat"><div class="catsvg"></div></div>
+  </section>
+
+  <section id="s-end" class="screen">
+    <h2 id="endT">YOU LOSE</h2>
+    <p>Wait a moment, I have one question for you...</p>
+  </section>
+
+  <section id="s-ask" class="screen">
+    <div class="catsvg"></div>
+    <h2>Kamu kangen aku ngga</h2>
+    <div class="row">
+      <button id="yaiBtn" class="btn"><svg class="ic" viewBox="0 0 48 48"><use href="#i-heart"/></svg> YAI</button>
+      <button id="naiBtn" class="btn nai"><svg class="ic" viewBox="0 0 48 48"><use href="#i-broken"/></svg> NAI</button>
+    </div>
+  </section>
+
+  <section id="s-no" class="screen">
+    <h2>Thank you</h2>
+    <p>Thank you for being honest and for listening to my feelings. I hope we can still be good friends.</p>
+    <p class="kabari">Let me know your answer</p>
+    <a class="btn tg" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 48 48"><use href="#i-env"/></svg> Contact me</a>
+    <button class="btn ghost again">Play again</button>
+  </section>
+
+  <section id="s-yes" class="screen">
+    <h2>Wow!</h2>
+    <p>Wow, I didn't expect that you would say yes! I'm so happy right now. Thank you for giving me this chance, and I promise to make you smile every single day.</p>
+    <p class="kabari">Let me know your answer</p>
+    <a class="btn tg" target="_blank" rel="noopener"><svg class="ic" viewBox="0 0 48 48"><use href="#i-env"/></svg> Contact me</a>
+    <button class="btn ghost again">Play again</button>
+  </section>
+</div>
+
+<script>
+
+const WHATSAPP_URL = "https://wa.me/+6285177852958";
+document.querySelectorAll('.tg').forEach(a => a.href = WHATSAPP_URL);
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+/* ---------- AUDIO: all sounds are generated in code ---------- */
+let ctx = null, master = null, soundOn = true, nextNote = 0, step = 0;
+const MEL = [523,587,659,784,659,587,523,0, 587,659,784,880,784,659,587,0];
+const BASS = [131,196,220,196,175,196,131,196];
+
+function initAudio(){
+  if (ctx){ if (ctx.state !== 'running') ctx.resume(); return; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  ctx = new AC();
+  master = ctx.createGain();
+  master.gain.value = soundOn ? 0.6 : 0;
+  master.connect(ctx.destination);
+  nextNote = ctx.currentTime + 0.1;
+}
+function tone(f, d, type = 'square', v = 0.15, t = 0, slide = 0){
+  if (!ctx) return;
+  const s = ctx.currentTime + Math.max(0, t);
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f, s);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, s + d);
+  g.gain.setValueAtTime(v, s);
+  g.gain.exponentialRampToValueAtTime(0.0001, s + d);
+  o.connect(g); g.connect(master);
+  o.start(s); o.stop(s + d + 0.05);
+}
+const sfx = {
+  click: () => tone(880, .06, 'square', .06),
+  eat: () => tone(520, .16, 'triangle', .3, 0, 1100),
+  yes: () => [523,659,784,1047,1319].forEach((f, i) => tone(f, .28, 'triangle', .22, i * .09)),
+  no: () => { tone(330, .22, 'sawtooth', .12); tone(220, .42, 'sawtooth', .12, .2); },
+  boom(){
+    if (!ctx) return;
+    const now = ctx.currentTime, len = ctx.sampleRate * .9;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
+    const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+    flt.type = 'lowpass';
+    flt.frequency.setValueAtTime(1500, now);
+    flt.frequency.exponentialRampToValueAtTime(90, now + .8);
+    g.gain.setValueAtTime(.9, now);
+    g.gain.exponentialRampToValueAtTime(.001, now + .9);
+    src.buffer = buf; src.connect(flt); flt.connect(g); g.connect(master); src.start(now);
+    tone(160, .7, 'sine', .7, 0, 35);
+  }
+};
+/* simple original loop */
+function music(){
+  if (!ctx || ctx.state !== 'running') return;
+  while (nextNote < ctx.currentTime + .2){
+    const t = nextNote - ctx.currentTime;
+    const m = MEL[step % 16];
+    if (m) tone(m, .2, 'square', .045, t);
+    if (step % 2 === 0) tone(BASS[(step >> 1) % 8], .42, 'triangle', .08, t);
+    nextNote += .25; step++;
+  }
+}
+setInterval(music, 50);
+document.addEventListener('pointerdown', initAudio);
+document.addEventListener('keydown', initAudio);
+$('#sound').onclick = e => {
+  initAudio();
+  soundOn = !soundOn;
+  if (master) master.gain.value = soundOn ? .6 : 0;
+  e.currentTarget.innerHTML = `<svg viewBox="0 0 48 48"><use href="#${soundOn ? 'i-spk' : 'i-mute'}"/></svg>`;
+  if (soundOn) sfx.click();
+};
+
+/* ---------- CAT ---------- */
+const catSVG = () => `<svg class="cat-svg" viewBox="0 0 200 220" aria-hidden="true">
+<g class="tail"><path d="M150 200Q186 200 180 150" fill="none" stroke="#5a2d3a" stroke-width="24" stroke-linecap="round"/><path d="M150 200Q186 200 180 150" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round"/></g>
+<ellipse cx="100" cy="172" rx="56" ry="44" fill="#fff" stroke="#5a2d3a" stroke-width="4"/>
+<ellipse cx="78" cy="212" rx="18" ry="8" fill="#fff" stroke="#5a2d3a" stroke-width="4"/>
+<ellipse cx="122" cy="212" rx="18" ry="8" fill="#fff" stroke="#5a2d3a" stroke-width="4"/>
+<path d="M44 58L48 10L92 38Z" fill="#fff" stroke="#5a2d3a" stroke-width="4" stroke-linejoin="round"/>
+<path d="M156 58L152 10L108 38Z" fill="#fff" stroke="#5a2d3a" stroke-width="4" stroke-linejoin="round"/>
+<path d="M55 44L57 24L76 38Z" fill="#ff9fb5"/>
+<path d="M145 44L143 24L124 38Z" fill="#ff9fb5"/>
+<ellipse cx="100" cy="84" rx="64" ry="54" fill="#fff" stroke="#5a2d3a" stroke-width="4"/>
+<path d="M92 34L96 46M100 32L100 46M108 34L104 46" stroke="#c9b3a2" stroke-width="4" stroke-linecap="round"/>
+<circle cx="78" cy="86" r="8" fill="#5a2d3a"/><circle cx="81" cy="82" r="3" fill="#fff"/>
+<circle cx="122" cy="86" r="8" fill="#5a2d3a"/><circle cx="125" cy="82" r="3" fill="#fff"/>
+<rect class="lid" x="68" y="76" width="20" height="20" fill="#fff"/>
+<rect class="lid" x="112" y="76" width="20" height="20" fill="#fff"/>
+<ellipse cx="60" cy="106" rx="10" ry="6" fill="#ff8fab" opacity=".8"/>
+<ellipse cx="140" cy="106" rx="10" ry="6" fill="#ff8fab" opacity=".8"/>
+<path d="M95 98h10l-5 6z" fill="#ff6f91" stroke="#ff6f91" stroke-width="2" stroke-linejoin="round"/>
+<path d="M42 104L14 98M42 112L14 116M158 104L186 98M158 112L186 116" stroke="#5a2d3a" stroke-width="2.5" stroke-linecap="round"/>
+<g class="mouth">
+  <path class="m-smile" d="M88 110Q94 120 100 110Q106 120 112 110" fill="none" stroke="#5a2d3a" stroke-width="3.5" stroke-linecap="round"/>
+  <g class="m-open"><path d="M86 108Q100 108 114 108Q110 126 100 126Q90 126 86 108Z" fill="#8b1e3f"/><path d="M92 120Q100 114 108 120Q100 124 92 120Z" fill="#ff6f91"/></g>
+</g>
+</svg>`;
+$$('.catsvg').forEach(el => el.innerHTML = catSVG());
+
+/* ---------- SCREENS ---------- */
+function show(id){ $$('.screen').forEach(s => s.classList.toggle('active', s.id === id)); }
+
+/* ---------- GAME ---------- */
+const SES = [
+  {t:'Food first!',            count:14, gap:1300, speed:140, bomb:0},
+  {t:'Watch out for bombs!',   count:20, gap:950,  speed:200, bomb:.4},
+  {t:'Bombs only!!',           count:24, gap:650,  speed:300, bomb:1}
+];
+const FOODS = ['f-donut','f-pizza','f-sushi','f-cake','f-straw','f-drum','f-cookie','f-ice','f-crois','f-melon'];
+const field = $('#s-game'), gcat = $('#gcat');
+let playing = false, sesIdx = 0, spawned = 0, spawnT = 0, items = [], score = 0;
+let catX = 0, catTarget = 0, keyDir = 0, W = 0, H = 0, lastT = performance.now();
+let chompT = 0, bannerT = 0, endT = 0, dragging = false;
+
+function frame(t){
+  const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
+  if (playing) update(dt);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+function update(dt){
+  const S = SES[sesIdx];
+  catTarget = Math.max(50, Math.min(W - 50, catTarget + keyDir * 320 * dt));
+  catX += (catTarget - catX) * Math.min(1, dt * 12);
+  gcat.style.transform = `translate3d(${catX - 80}px,0,0)`;
+
+  if (spawned < S.count){
+    spawnT -= dt * 1000;
+    if (spawnT <= 0){ spawnT = S.gap; spawned++; spawn(S); }
+  }
+  const catchY = H - 180;
+  for (const it of items){
+    it.y += S.speed * dt;
+    it.el.style.transform = `translate3d(${it.x - 22}px,${it.y}px,0)`;
+    if (it.y + 22 >= catchY && Math.abs(it.x - catX) < 58) catchItem(it);
+    else if (it.y > H + 60) kill(it);
+    if (!playing) break;
+  }
+  items = items.filter(i => !i.gone);
+  if (playing && spawned >= S.count && items.length === 0) nextSession();
+}
+
+function spawn(S){
+  const bomb = Math.random() < S.bomb;
+  const id = bomb ? 'i-bomb' : FOODS[Math.floor(Math.random() * FOODS.length)];
+  const x = 36 + Math.random() * (W - 72);
+  const el = document.createElement('div'); el.className = 'it';
+  el.innerHTML = `<svg viewBox="0 0 48 48"><use href="#${id}"/></svg>`;
+  field.append(el);
+  items.push({x, y: -44, bomb, el, gone: false});
+}
+function kill(it){ it.gone = true; it.el.remove(); }
+
+function catchItem(it){
+  kill(it);
+  const cy = H - 150;
+  if (it.bomb){
+    playing = false;
+    sfx.boom();
+    fx(catX, cy - 20, '<svg viewBox="0 0 100 100"><use href="#i-boom"/></svg>', 'blast');
+    field.classList.remove('shake'); void field.offsetWidth; field.classList.add('shake');
+    setTimeout(() => endGame(false), 1000);
+  } else {
+    score++;
+    sfx.eat();
+    $('#hudScore').textContent = `Food: ${score}`;
+    chomp();
+    fx(catX + 40, cy - 60, '+1', '');
+  }
+}
+function chomp(){
+  gcat.classList.add('chomp');
+  clearTimeout(chompT);
+  chompT = setTimeout(() => gcat.classList.remove('chomp'), 380);
+}
+function fx(x, y, html, cls){
+  const d = document.createElement('div');
+  d.className = 'fx ' + cls; d.innerHTML = html;
+  d.style.left = x + 'px'; d.style.top = y + 'px';
+  field.append(d);
+  setTimeout(() => d.remove(), 900);
+}
+function banner(a, b, cb){
+  const el = $('#banner');
+  el.innerHTML = `<b>${a}</b><span>${b}</span>`;
+  el.classList.add('show');
+  clearTimeout(bannerT);
+  bannerT = setTimeout(() => { el.classList.remove('show'); cb(); }, 1700);
+}
+function startSession(){
+  const S = SES[sesIdx];
+  spawned = 0; spawnT = 0; playing = false;
+  $('#hudS').textContent = `ROUND ${sesIdx + 1} / 3`;
+  banner(`ROUND ${sesIdx + 1}`, S.t, () => { playing = true; });
+}
+function nextSession(){
+  playing = false;
+  sesIdx++;
+  if (sesIdx >= SES.length){ setTimeout(() => endGame(true), 700); return; }
+  startSession();
+}
+function startGame(){
+  show('s-game');
+  W = field.clientWidth; H = field.clientHeight;
+  items.forEach(kill); items = [];
+  score = 0; sesIdx = 0;
+  catX = catTarget = W / 2;
+  $('#hudScore').textContent = 'Food: 0';
+  startSession();
+}
+function endGame(win){
+  playing = false;
+  items.forEach(kill); items = [];
+  field.classList.remove('shake');
+  $('#endT').innerHTML = win ? 'YOU WIN!' : 'YOU LOSE <svg class="ic" viewBox="0 0 48 48"><use href="#i-broken"/></svg>';
+  if (win) sfx.yes(); else sfx.no();
+  show('s-end');
+  clearTimeout(endT);
+  endT = setTimeout(() => show('s-ask'), 2600);
+}
+window.addEventListener('resize', () => { W = field.clientWidth; H = field.clientHeight; });
+
+/* controls: drag the screen, or use the arrow keys */
+function moveTo(e){ catTarget = e.clientX - field.getBoundingClientRect().left; }
+field.addEventListener('pointerdown', e => { dragging = true; moveTo(e); });
+field.addEventListener('pointermove', e => { if (dragging) moveTo(e); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => field.addEventListener(ev, () => dragging = false));
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a') keyDir = -1;
+  if (e.key === 'ArrowRight' || e.key === 'd') keyDir = 1;
+});
+addEventListener('keyup', e => {
+  if (['ArrowLeft','a','ArrowRight','d'].includes(e.key)) keyDir = 0;
+});
+
+/* ---------- BUTTONS ---------- */
+$('#playBtn').onclick = () => { sfx.click(); startGame(); };
+$('#yaiBtn').onclick = () => showYes();
+$('#naiBtn').onclick = () => { sfx.no(); show('s-no'); };
+$$('.again').forEach(b => b.onclick = () => { sfx.click(); show('s-title'); });
+
+function showYes(){
+  sfx.yes();
+  show('s-yes');
+  const box = $('#s-yes');
+  box.querySelectorAll('.heart').forEach(h => h.remove());
+  for (let i = 0; i < 18; i++){
+    const h = document.createElement('span');
+    h.className = 'heart';
+    h.innerHTML = '<svg viewBox="0 0 48 48"><use href="#i-heart"/></svg>';
+    h.style.left = (Math.random() * 100) + '%';
+    h.style.animationDuration = (3 + Math.random() * 3) + 's';
+    h.style.animationDelay = (Math.random() * 2) + 's';
+    box.append(h);
+  }
+}
+</script>
+</body>
+</html>
